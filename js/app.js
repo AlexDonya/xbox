@@ -153,42 +153,40 @@
                         let spollerTitle = spollerItem.querySelector("summary");
                         if (hideSpollerBody) {
                             spollerTitle.removeAttribute("tabindex");
-                            const openAttr = spollerItem.hasAttribute("open");
-                            if (openAttr == false) {
-                                spollerItem.setAttribute("open", "false");
+                            if (!spollerItem.hasAttribute("data-open")) {
+                                spollerItem.open = false;
                                 spollerTitle.nextElementSibling.hidden = true;
                             } else {
                                 spollerTitle.classList.add("_spoller-active");
-                                spollerItem.setAttribute("open", "true");
+                                spollerItem.open = true;
                             }
                         } else {
                             spollerTitle.setAttribute("tabindex", "-1");
                             spollerTitle.classList.remove("_spoller-active");
-                            spollerItem.setAttribute("open", "true");
+                            spollerItem.open = true;
                             spollerTitle.nextElementSibling.hidden = false;
                         }
                     }));
                 }
             }
             function setSpollerAction(e) {
+                e.preventDefault();
                 const el = e.target;
-                if (el.closest("summary") && el.closest("[data-spollers]")) {
-                    if (el.closest("[data-spollers]").classList.contains("_spoller-init")) {
-                        const spollerTitle = el.closest("summary");
-                        const spollerBlock = spollerTitle.closest("details");
-                        const spollersBlock = spollerTitle.closest("[data-spollers]");
-                        const oneSpoller = spollersBlock.hasAttribute("data-one-spoller");
-                        const spollerSpeed = spollersBlock.dataset.spollersSpeed ? parseInt(spollersBlock.dataset.spollersSpeed) : 500;
-                        if (!spollersBlock.querySelectorAll("._slide").length) {
-                            spollerTitle.classList.toggle("_spoller-active");
-                            if (oneSpoller && !spollerBlock.getAttribute("true")) hideSpollersBody(spollersBlock);
-                            _slideToggle(spollerTitle.nextElementSibling, spollerSpeed);
-                            !spollerBlock.getAttribute("true") ? spollerBlock.setAttribute("open", "true") : setTimeout((() => {
-                                spollerBlock.setAttribute("open", "false");
-                            }), spollerSpeed);
-                        }
+                if (el.closest("summary") && el.closest("[data-spollers]")) if (el.closest("[data-spollers]").classList.contains("_spoller-init")) {
+                    const spollerTitle = el.closest("summary");
+                    const spollerBlock = spollerTitle.closest("details");
+                    const spollersBlock = spollerTitle.closest("[data-spollers]");
+                    const oneSpoller = spollersBlock.hasAttribute("data-one-spoller");
+                    const spollerSpeed = spollersBlock.dataset.spollersSpeed ? parseInt(spollersBlock.dataset.spollersSpeed) : 500;
+                    if (!spollersBlock.querySelectorAll("._slide").length) {
+                        if (oneSpoller && !spollerBlock.open) hideSpollersBody(spollersBlock);
+                        !spollerBlock.open ? spollerBlock.open = true : setTimeout((() => {
+                            spollerBlock.open = false;
+                        }), spollerSpeed);
+                        spollerTitle.classList.toggle("_spoller-active");
+                        spollerBlock.classList.toggle("_details-open");
+                        _slideToggle(spollerTitle.nextElementSibling, spollerSpeed);
                     }
-                    e.preventDefault();
                 }
                 if (!el.closest("[data-spollers]")) {
                     const spollersClose = document.querySelectorAll("[data-spoller-close]");
@@ -200,21 +198,21 @@
                             spollerClose.classList.remove("_spoller-active");
                             _slideUp(spollerClose.nextElementSibling, spollerSpeed);
                             setTimeout((() => {
-                                spollerCloseBlock.setAttribute("open", "false");
+                                spollerCloseBlock.open = false;
                             }), spollerSpeed);
                         }
                     }));
                 }
             }
             function hideSpollersBody(spollersBlock) {
-                const spollerActiveBlock = spollersBlock.querySelector("details[open='true']");
+                const spollerActiveBlock = spollersBlock.querySelector("details[open]");
                 if (spollerActiveBlock && !spollersBlock.querySelectorAll("._slide").length) {
                     const spollerActiveTitle = spollerActiveBlock.querySelector("summary");
                     const spollerSpeed = spollersBlock.dataset.spollersSpeed ? parseInt(spollersBlock.dataset.spollersSpeed) : 500;
                     spollerActiveTitle.classList.remove("_spoller-active");
                     _slideUp(spollerActiveTitle.nextElementSibling, spollerSpeed);
                     setTimeout((() => {
-                        spollerActiveBlock.setAttribute("open", "false");
+                        spollerActiveBlock.open = false;
                     }), spollerSpeed);
                 }
             }
@@ -231,14 +229,14 @@
                 }
                 if (!document.documentElement.classList.contains("menu-open")) {
                     const header = document.querySelector("header");
-                    const spollerActiveBlock = header.querySelector("details[open='true']");
+                    const spollerActiveBlock = header.querySelector("details[open]");
                     if (spollerActiveBlock && !header.querySelectorAll("._slide").length) {
                         const spollerActiveTitle = spollerActiveBlock.querySelector("summary");
                         const spollerSpeed = header.dataset.spollersSpeed ? parseInt(header.dataset.spollersSpeed) : 500;
                         spollerActiveTitle.classList.remove("_spoller-active");
                         _slideUp(spollerActiveTitle.nextElementSibling, spollerSpeed);
                         setTimeout((() => {
-                            spollerActiveBlock.setAttribute("open", "false");
+                            spollerActiveBlock.open = false;
                         }), spollerSpeed);
                     }
                 }
@@ -256,14 +254,14 @@
                 }
                 if (!document.documentElement.classList.contains("menu-open")) {
                     const header = document.querySelector("header");
-                    const spollerActiveBlock = header.querySelector("details[open='true']");
+                    const spollerActiveBlock = header.querySelector("details[open]");
                     if (spollerActiveBlock && !header.querySelectorAll("._slide").length) {
                         const spollerActiveTitle = spollerActiveBlock.querySelector("summary");
                         const spollerSpeed = header.dataset.spollersSpeed ? parseInt(header.dataset.spollersSpeed) : 500;
                         spollerActiveTitle.classList.remove("_spoller-active");
                         _slideUp(spollerActiveTitle.nextElementSibling, spollerSpeed);
                         setTimeout((() => {
-                            spollerActiveBlock.setAttribute("open", "false");
+                            spollerActiveBlock.open = false;
                         }), spollerSpeed);
                     }
                 }
@@ -525,6 +523,10 @@
             setTimeout((() => {
                 this._focusTrap();
             }), 50);
+            const iframes = document.querySelectorAll("iframe");
+            if (iframes.length >= 1) iframes.forEach((iframe => {
+                iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', "*");
+            }));
             this.popupLogging(`Закрив попап`);
         }
         _getHash() {
@@ -3973,7 +3975,7 @@
         footerColumnsObj.style.gridTemplateColumns = auto.repeat(5);
     }
     window.addEventListener("DOMContentLoaded", (() => {
-        let videos = document.querySelectorAll(".popup__video");
+        const videos = document.querySelectorAll(".popup__video");
         videos.forEach((video => {
             video.addEventListener("click", (() => {
                 if (video.classList.contains("ready")) return;
